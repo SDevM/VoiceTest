@@ -1,0 +1,111 @@
+export class AudioRecorder {
+  private state: RecorderState = RecorderState.OFF;
+  private constraints = { audio: true };
+  private audioIn: Promise<MediaStream>;
+  private stream?: MediaStream;
+  private mediaRecorder?: MediaRecorder;
+  private context = new window.AudioContext();
+  private reader = new FileReader();
+  private audioElement = new Audio();
+
+  constructor(private timeslice: number) {
+    this.audioIn = navigator.mediaDevices.getUserMedia(this.constraints);
+  }
+
+  start(): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)) {
+        reject(
+          new Error(
+            'mediaDevices API or getUserMedia method is not supported in this browser.'
+          )
+        );
+      } else {
+        this.audioIn.then((stream) => {
+          this.mediaRecorder = new MediaRecorder(stream);
+          this.mediaRecorder.start(this.timeslice);
+          this.state = RecorderState.RECORDING;
+          console.log(this.state);
+
+          this.mediaPlayer(stream);
+          resolve(true);
+        });
+      }
+    });
+  }
+
+  pause() {
+    if (this.mediaRecorder) {
+      this.mediaRecorder.pause();
+      this.state = RecorderState.PAUSED;
+    }
+    this.stream?.getTracks().forEach((track) => (track.enabled = false));
+    console.log(this.state);
+  }
+
+  resume() {
+    if (this.mediaRecorder) {
+      this.mediaRecorder.resume();
+      this.state = RecorderState.PAUSED;
+    }
+    this.stream?.getTracks().forEach((track) => (track.enabled = true));
+    console.log(this.state);
+  }
+
+  stop() {
+    if (this.mediaRecorder) {
+      this.mediaRecorder.stop();
+      this.state = RecorderState.OFF;
+    }
+    this.audioElement.srcObject = null;
+    this.stream?.getTracks().forEach((track) => track.stop());
+    console.log(this.state);
+  }
+
+  cancel() {
+    if (this.mediaRecorder) {
+      this.mediaRecorder?.addEventListener('dataavailable', () => null);
+      this.mediaRecorder.stop();
+      this.state = RecorderState.OFF;
+    }
+    console.log(this.state);
+  }
+
+  //   streamOut() {
+  //   }
+
+  //   private play() {
+  //     this.blobs.forEach((blob) => {
+  //     const reader = new FileReader();
+  //     reader.onload = (e) => {
+  //       this.playSound(e.target?.result as ArrayBuffer);
+  //     };
+  //     reader.readAsArrayBuffer(new Blob(this.blobs));
+  //     });
+  //   }
+
+  private async playSound(sound: Blob) {
+    // create a new audio element
+    const audioElement = new Audio();
+
+    // set the audio element's source to the blob URL
+    audioElement.src = URL.createObjectURL(sound);
+
+    // play the audio
+    audioElement.play();
+  }
+
+  private async mediaPlayer(media: MediaStream) {
+    // set the audio element's source to the blob URL
+    this.audioElement.srcObject = media;
+
+    // play the audio
+    this.audioElement.play();
+  }
+}
+
+enum RecorderState {
+  OFF,
+  RECORDING,
+  PAUSED,
+}
