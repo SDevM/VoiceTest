@@ -19,6 +19,9 @@ export class AudioStreamer {
       } else {
         this.audioIn.then((stream) => {
           this.stream = stream;
+          this.stream
+            ?.getAudioTracks()
+            .forEach((track) => (track.enabled = true));
           if (this.stream) this.mediaPlayer(this.stream);
           console.log('STARTED');
           resolve(true);
@@ -28,7 +31,8 @@ export class AudioStreamer {
   }
 
   stop() {
-    this.stream?.getAudioTracks().forEach((track) => track.stop());
+    this.stream?.getAudioTracks().forEach((track) => (track.enabled = false));
+    this.audioElement.pause();
     console.log('STOPPED');
   }
 
