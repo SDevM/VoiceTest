@@ -36,7 +36,10 @@ export class AppComponent {
 
   recordToggle() {
     if (!this.started) this.audioRecorder.start();
-    else if (this.started) this.audioRecorder.stop();
+    else if (this.started) {
+      this.audioRecorder.stop();
+      this.paused = false;
+    }
     this.started = !this.started;
   }
 }
