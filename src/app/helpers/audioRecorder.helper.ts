@@ -2,11 +2,9 @@ export class AudioRecorder {
   private state: RecorderState = RecorderState.OFF;
   private constraints = { audio: true };
   private audioIn: Promise<MediaStream>;
-  private stream?: MediaStream;
   private mediaRecorder?: MediaRecorder;
-  private context = new window.AudioContext();
-  private reader = new FileReader();
   private audioElement = new Audio();
+  private buffer: Blob[] = [];
 
   constructor(private timeslice: number) {
     this.audioIn = navigator.mediaDevices.getUserMedia(this.constraints);
@@ -22,53 +20,48 @@ export class AudioRecorder {
         );
       } else {
         this.audioIn.then((stream) => {
+          this.buffer = [];
           this.mediaRecorder = new MediaRecorder(stream);
+          this.mediaRecorder.addEventListener('dataavailable', (event) => {
+            this.buffer.push(event.data);
+          });
           this.mediaRecorder.start(this.timeslice);
           this.state = RecorderState.RECORDING;
-          this.stream = stream;
-          console.log(this.state);
-
-          this.mediaPlayer(stream);
+          console.log('STARTED');
           resolve(true);
         });
       }
     });
   }
 
+  resume() {
+    if (this.mediaRecorder) this.mediaRecorder.resume();
+    this.state = RecorderState.RECORDING;
+    console.log('RESUMED');
+  }
+
+  pause() {
+    if (this.mediaRecorder) this.mediaRecorder.pause();
+    this.state = RecorderState.PAUSED;
+    console.log('PAUSED');
+  }
+
   stop() {
     if (this.mediaRecorder) {
       this.mediaRecorder.stop();
       this.state = RecorderState.OFF;
+      this.playSound(new Blob(this.buffer));
+      console.log('STOPPED');
     }
-    // this.audioElement.srcObject = null;
-    this.stream?.getAudioTracks().forEach((track) => track.stop());
-    console.log('STOPPED');
-
-    console.log(this.state);
   }
 
   cancel() {
     if (this.mediaRecorder) {
-      this.mediaRecorder?.addEventListener('dataavailable', () => null);
       this.mediaRecorder.stop();
-
       this.state = RecorderState.OFF;
+      console.log('CANCELLED');
     }
-    console.log(this.state);
   }
-
-  //   streamOut() {
-  //   }
-
-  //   private play() {
-  //     this.blobs.forEach((blob) => {
-  //     const reader = new FileReader();
-  //     reader.onload = (e) => {
-  //       this.playSound(e.target?.result as ArrayBuffer);
-  //     };
-  //     reader.readAsArrayBuffer(new Blob(this.blobs));
-  //     });
-  //   }
 
   private async playSound(sound: Blob) {
     // create a new audio element
@@ -79,14 +72,6 @@ export class AudioRecorder {
 
     // play the audio
     audioElement.play();
-  }
-
-  private async mediaPlayer(media: MediaStream) {
-    // set the audio element's source to the blob URL
-    this.audioElement.srcObject = media;
-
-    // play the audio
-    this.audioElement.play();
   }
 }
 
