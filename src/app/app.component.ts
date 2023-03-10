@@ -24,4 +24,14 @@ export class AppComponent {
     }
     console.log('VOICE ACTIVE', this.voiceActive);
   }
+
+  toggle() {
+    if (this.paused) {
+      this.paused = false;
+      this.audioRecorder.resume();
+    } else if (!this.paused) {
+      this.paused = true;
+      this.audioRecorder.pause();
+    }
+  }
 }
