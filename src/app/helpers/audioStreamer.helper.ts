@@ -19,6 +19,7 @@ export class AudioStreamer {
       } else {
         this.audioIn.then((stream) => {
           this.stream = stream;
+          if (this.stream) this.mediaPlayer(this.stream);
           console.log('STARTED');
           resolve(true);
         });
@@ -29,10 +30,6 @@ export class AudioStreamer {
   stop() {
     this.stream?.getAudioTracks().forEach((track) => track.stop());
     console.log('STOPPED');
-  }
-
-  streamOut() {
-    if (this.stream) this.mediaPlayer(this.stream);
   }
 
   private mediaPlayer(media: MediaStream) {
