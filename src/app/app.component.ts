@@ -10,6 +10,7 @@ export class AppComponent {
   title = 'VoiceTest';
   voiceActive = false;
   audioRecorder = new AudioRecorder(250);
+  paused = true;
 
   async voice() {
     if (!this.voiceActive) {
