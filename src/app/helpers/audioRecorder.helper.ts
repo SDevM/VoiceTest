@@ -25,6 +25,7 @@ export class AudioRecorder {
           this.mediaRecorder = new MediaRecorder(stream);
           this.mediaRecorder.start(this.timeslice);
           this.state = RecorderState.RECORDING;
+          this.stream = stream;
           console.log(this.state);
 
           this.mediaPlayer(stream);
@@ -34,31 +35,15 @@ export class AudioRecorder {
     });
   }
 
-  pause() {
-    if (this.mediaRecorder) {
-      this.mediaRecorder.pause();
-      this.state = RecorderState.PAUSED;
-    }
-    this.stream?.getTracks().forEach((track) => (track.enabled = false));
-    console.log(this.state);
-  }
-
-  resume() {
-    if (this.mediaRecorder) {
-      this.mediaRecorder.resume();
-      this.state = RecorderState.PAUSED;
-    }
-    this.stream?.getTracks().forEach((track) => (track.enabled = true));
-    console.log(this.state);
-  }
-
   stop() {
     if (this.mediaRecorder) {
       this.mediaRecorder.stop();
       this.state = RecorderState.OFF;
     }
-    this.audioElement.srcObject = null;
-    this.stream?.getTracks().forEach((track) => track.stop());
+    // this.audioElement.srcObject = null;
+    this.stream?.getAudioTracks().forEach((track) => track.stop());
+    console.log('STOPPED');
+
     console.log(this.state);
   }
 
@@ -66,6 +51,7 @@ export class AudioRecorder {
     if (this.mediaRecorder) {
       this.mediaRecorder?.addEventListener('dataavailable', () => null);
       this.mediaRecorder.stop();
+
       this.state = RecorderState.OFF;
     }
     console.log(this.state);
