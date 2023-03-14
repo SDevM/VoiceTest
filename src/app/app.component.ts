@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
-import { Socket } from 'ngx-socket-io';
 import { blobPlayer, mediaPlayer } from './helpers/audioPlayer.helper';
 import { AudioRecorder } from './helpers/audioRecorder.helper';
 import { AudioStreamer } from './helpers/audioStreamer.helper';
+import { SocketService } from './services/socket.service';
 
 @Component({
   selector: 'app-root',
@@ -16,12 +16,47 @@ export class AppComponent {
   audioRecorder = new AudioRecorder(250);
   paused = false;
   started = false;
-  peerConnection = new RTCPeerConnection();
-  dataChannel?: RTCDataChannel;
+  peerConnections: Map<string, RTCPeerConnection> = new Map();
   GlobalAudio = new Audio();
 
-  constructor(private socket: Socket) {
-    socket.on('offer', (offer: any) => {});
+  constructor(sService: SocketService) {
+    // When recieving an offer, set it as a remote description
+    sService.socket.on(
+      'offer',
+      (offer: RTCSessionDescriptionInit, id: string) => {
+        const pc = this.peerConnections.get(id);
+        if (pc) {
+          pc.setRemoteDescription(offer);
+          pc.createAnswer().then((answer) => {
+            sService.sendAnswer(answer);
+          });
+        }
+      }
+    );
+
+    // When recieving an answer, set it as a remote description
+    sService.socket.on(
+      'answer',
+      (answer: RTCSessionDescriptionInit, id: string) => {
+        this.peerConnections.get(id)?.setRemoteDescription(answer);
+      }
+    );
+
+    // Add a new user to peer connections
+    sService.socket.on('addID', (Ids: string[]) => {
+      Ids.forEach((id) => {
+        this.peerConnections.set(id, new RTCPeerConnection());
+        this.peerConnections
+          .get(id)
+          ?.createOffer()
+          .then((offer) => sService.makeOffer(offer));
+      });
+    });
+
+    // Remove user from peer connections
+    sService.socket.on('delID', (id: string) => {
+      this.peerConnections.delete(id);
+    });
   }
 
   async voice() {
@@ -33,7 +68,7 @@ export class AppComponent {
       // if (stream) mediaPlayer(stream, this.GlobalAudio);
       if (stream)
         stream.getAudioTracks().forEach((track) => {
-          this.peerConnection.addTrack(track, stream!);
+          this.peerConnections.forEach((pc) => pc.addTrack(track, stream!));
         });
     } else {
       await this.audioStreamer.stop();
