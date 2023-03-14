@@ -14,6 +14,7 @@ export class AppComponent {
   voiceActive = false;
   audioStreamer = new AudioStreamer();
   audioRecorder = new AudioRecorder(250);
+  stream: MediaStream | void = undefined;
   paused = false;
   started = false;
   peerConnections: Map<string, RTCPeerConnection> = new Map();
@@ -64,11 +65,22 @@ export class AppComponent {
           });
 
         this.peerConnections.get(id)!.ontrack = (event) => {
+          console.log('ONTRACK FIRED', id);
+
           event.streams.forEach((stream) =>
             mediaPlayer(stream, new HTMLAudioElement())
           );
         };
       });
+
+      if (this.voiceActive && this.stream)
+        this.stream.getAudioTracks().forEach((track) => {
+          console.log('TRACK', track);
+
+          this.peerConnections.forEach((pc) =>
+            pc.addTrack(track, this.stream!)
+          );
+        });
     });
 
     // Remove user from peer connections
@@ -80,13 +92,17 @@ export class AppComponent {
   async voice() {
     if (!this.voiceActive) {
       this.voiceActive = true;
-      let stream = await this.audioStreamer.start().catch((err: Error) => {
+      this.stream = await this.audioStreamer.start().catch((err: Error) => {
         console.log('RECORDING FAILED', err.message);
       });
-      // if (stream) mediaPlayer(stream, this.GlobalAudio);
-      if (stream)
-        stream.getAudioTracks().forEach((track) => {
-          this.peerConnections.forEach((pc) => pc.addTrack(track, stream!));
+      // if (this.stream) mediaPlayer(this.stream, this.GlobalAudio);
+      if (this.stream)
+        this.stream.getAudioTracks().forEach((track) => {
+          console.log('TRACK', track);
+
+          this.peerConnections.forEach((pc) =>
+            pc.addTrack(track, this.stream!)
+          );
         });
     } else {
       await this.audioStreamer.stop();
