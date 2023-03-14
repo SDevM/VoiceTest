@@ -39,12 +39,12 @@ export class AppComponent {
         } else {
           console.log('Offer', session);
 
+          pc.setRemoteDescription(session).catch((err) =>
+            console.error(err.message)
+          );
           pc.createAnswer().then((answer) => {
             // pc!.setLocalDescription(answer);
             sService.sendSession(answer, id, true);
-            pc.setRemoteDescription(session).catch((err) =>
-              console.error(err.message)
-            );
           });
         }
       }
