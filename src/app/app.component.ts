@@ -45,6 +45,11 @@ export class AppComponent {
           let pc = this.peerConnections.get(id)!;
           console.log('Offer', session);
 
+          this.stream?.getAudioTracks().forEach((track) => {
+            console.log('TRACK', track);
+            pc.addTrack(track);
+          });
+
           pc.setRemoteDescription(session).catch((err) =>
             console.error(err.message)
           );
