@@ -35,7 +35,7 @@ export class SocketService {
 
   sendSession(session: RTCSessionDescriptionInit, id: string, answer: boolean) {
     this.socket.emit('session', session, id, answer);
-    console.log('CANDIDATE FIRED');
+    console.log('SESSION FIRED');
   }
 
   sendCandidate(candidate: RTCIceCandidate, id: string) {
