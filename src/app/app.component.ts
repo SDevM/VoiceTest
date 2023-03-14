@@ -29,7 +29,7 @@ export class AppComponent {
           pc.setRemoteDescription(offer);
           pc.createAnswer().then((answer) => {
             pc.setLocalDescription(answer);
-            sService.sendAnswer(answer);
+            sService.sendAnswer(answer, id);
           });
         }
       }
@@ -52,7 +52,7 @@ export class AppComponent {
           ?.createOffer()
           .then((offer) => {
             this.peerConnections.get(id)?.setLocalDescription(offer);
-            sService.makeOffer(offer);
+            sService.makeOffer(offer, id);
           });
       });
     });
