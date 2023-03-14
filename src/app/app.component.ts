@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { AfterViewInit, Component } from '@angular/core';
 import { blobPlayer, mediaPlayer } from './helpers/audioPlayer.helper';
 import { AudioRecorder } from './helpers/audioRecorder.helper';
 import { AudioStreamer } from './helpers/audioStreamer.helper';
@@ -9,7 +9,7 @@ import { SocketService } from './services/socket.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
-export class AppComponent {
+export class AppComponent implements AfterViewInit {
   title = 'VoiceTest';
   voiceActive = false;
   audioStreamer = new AudioStreamer();
@@ -28,7 +28,6 @@ export class AppComponent {
       .catch((err: Error) => {
         console.log('STREAMING FAILED', err.message);
       });
-    mediaPlayer(this.remoteStream, new HTMLAudioElement());
 
     // When recieving an offer, set it as a remote description
     sService.socket.on(
@@ -144,6 +143,10 @@ export class AppComponent {
       this.peerConnections.delete(id);
       console.log('CONNECTION DELETED', id);
     });
+  }
+
+  ngAfterViewInit(): void {
+    mediaPlayer(this.remoteStream, new HTMLAudioElement());
   }
 
   async voice() {
