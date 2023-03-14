@@ -26,9 +26,6 @@ export class AppComponent {
     sService.socket.on(
       'session',
       (session: RTCSessionDescriptionInit, id: string, answer: boolean) => {
-        let pc = this.peerConnections.get(id)!;
-        if (!pc) return;
-
         if (answer) {
           console.log('Answer', session);
 
@@ -37,6 +34,8 @@ export class AppComponent {
             ?.setRemoteDescription(session)
             .catch((err) => console.error(err.message));
         } else {
+          this.peerConnections.set(id, new RTCPeerConnection());
+          let pc = this.peerConnections.get(id)!;
           console.log('Offer', session);
 
           pc.setRemoteDescription(session).catch((err) =>
@@ -90,8 +89,6 @@ export class AppComponent {
           .get(id)
           ?.createOffer()
           .then((offer) => {
-            console.log('TARGET CONNECTION', this.peerConnections.get(id));
-
             this.peerConnections.get(id)!.onicecandidate = (event) => {
               console.log('ONICECANDIDATE');
 
