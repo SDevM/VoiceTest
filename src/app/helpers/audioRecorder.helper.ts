@@ -46,12 +46,12 @@ export class AudioRecorder {
     console.log('PAUSED');
   }
 
-  stop() {
+  stop(): Blob | void {
     if (this.mediaRecorder) {
       this.mediaRecorder.stop();
       this.state = RecorderState.OFF;
-      this.playSound(new Blob(this.buffer));
       console.log('STOPPED');
+      return new Blob(this.buffer);
     }
   }
 
@@ -61,17 +61,6 @@ export class AudioRecorder {
       this.state = RecorderState.OFF;
       console.log('CANCELLED');
     }
-  }
-
-  private async playSound(sound: Blob) {
-    // create a new audio element
-    const audioElement = new Audio();
-
-    // set the audio element's source to the blob URL
-    audioElement.src = URL.createObjectURL(sound);
-
-    // play the audio
-    audioElement.play();
   }
 }
 

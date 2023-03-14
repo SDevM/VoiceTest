@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import { Socket } from 'ngx-socket-io';
+import { blobPlayer, mediaPlayer } from './helpers/audioPlayer.helper';
 import { AudioRecorder } from './helpers/audioRecorder.helper';
 import { AudioStreamer } from './helpers/audioStreamer.helper';
 
@@ -14,13 +16,24 @@ export class AppComponent {
   audioRecorder = new AudioRecorder(250);
   paused = false;
   started = false;
+  peerConnection = new RTCPeerConnection();
+  dataChannel?: RTCDataChannel;
+  GlobalAudio = new Audio();
+
+  constructor(private socket: Socket) {
+    socket.on('offer', (offer: any) => {});
+  }
 
   async voice() {
     if (!this.voiceActive) {
       this.voiceActive = true;
-      await this.audioStreamer.start().catch((err: Error) => {
+      let stream = await this.audioStreamer.start().catch((err: Error) => {
         console.log('RECORDING FAILED', err.message);
       });
+      // if (stream) mediaPlayer(stream, this.GlobalAudio);
+      if (stream)
+        this.peerConnection.addTrack(stream.getAudioTracks()[0], stream);
+        this.peerConnection.
     } else {
       await this.audioStreamer.stop();
       this.voiceActive = false;
@@ -37,7 +50,8 @@ export class AppComponent {
   recordToggle() {
     if (!this.started) this.audioRecorder.start();
     else if (this.started) {
-      this.audioRecorder.stop();
+      let audio = this.audioRecorder.stop();
+      if (audio) blobPlayer(audio, this.GlobalAudio);
       this.paused = false;
     }
     this.started = !this.started;
