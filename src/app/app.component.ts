@@ -24,70 +24,85 @@ export class AppComponent {
   constructor(sService: SocketService) {
     // When recieving an offer, set it as a remote description
     sService.socket.on(
-      'offer',
-      (
-        offer: RTCSessionDescriptionInit,
-        candidate: RTCIceCandidate,
-        id: string
-      ) => {
-        console.log('offer', candidate);
+      'session',
+      (session: RTCSessionDescriptionInit, id: string, answer: boolean) => {
+        let pc = this.peerConnections.get(id)!;
+        if (!pc) return;
 
-        let pc = this.peerConnections.get(id);
-        if (pc) {
-          pc.addIceCandidate(candidate).catch((err) =>
-            console.error(err.message)
-          );
-          pc.setRemoteDescription(offer).catch((err) =>
+        if (answer) {
+          console.log('Answer', session);
+
+          this.peerConnections
+            .get(id)
+            ?.setRemoteDescription(session)
+            .catch((err) => console.error(err.message));
+        } else {
+          console.log('Offer', session);
+
+          pc.setRemoteDescription(session).catch((err) =>
             console.error(err.message)
           );
           pc.createAnswer().then((answer) => {
             pc!.setLocalDescription(answer);
-            sService.sendAnswer(answer, id);
+            sService.sendSession(answer, id, true);
           });
         }
       }
     );
 
-    // When recieving an answer, set it as a remote description
+    // When recieving a candidate, set it on the apropriate pc
     sService.socket.on(
-      'answer',
-      (answer: RTCSessionDescriptionInit, id: string) => {
-        console.log('answer');
-
-        this.peerConnections
-          .get(id)
-          ?.setRemoteDescription(answer)
-          .catch((err) => console.error(err.message));
+      'candidate',
+      (candidate: RTCIceCandidate, id: string) => {
+        console.log('ICE CANDIDATE DETECTED', candidate);
+        if (this.peerConnections.has(id)) {
+          this.peerConnections
+            .get(id)!
+            .addIceCandidate(candidate)
+            .catch((err) => console.error(err.message));
+        } else {
+          console.log('ICE CANDIDATE FAILED');
+        }
       }
     );
 
     // Add a new user to peer connections
-    sService.socket.on('addID', (Ids: string[]) => {
+    sService.socket.on('addID', async (Ids: string[]) => {
       console.log('addID');
 
       Ids.forEach((id) => {
+        console.log('CURRENT ID', id);
+
         this.peerConnections.set(
           id,
           new RTCPeerConnection({
             iceServers: [
               {
-                urls: 'stun:stun.l.google.com:19302',
+                urls: 'stun:stun.12voip.com:3478',
               },
             ],
           })
         );
+
+        console.log('PEER CONNECTION', this.peerConnections.get(id));
+
         this.peerConnections
           .get(id)
           ?.createOffer()
           .then((offer) => {
+            console.log('TARGET CONNECTION', this.peerConnections.get(id));
+
             this.peerConnections.get(id)!.onicecandidate = (event) => {
-              if (event.candidate)
-                sService.makeOffer(offer, event.candidate, id);
+              console.log('ONICECANDIDATE');
+
+              if (event.candidate) sService.sendCandidate(event.candidate, id);
               console.log('OFFER SENT', offer);
             };
+
             this.peerConnections
               .get(id)
               ?.setLocalDescription(offer)
+              .then(() => sService.sendSession(offer, id, false))
               .catch((err) => console.error(err.message));
           });
 
@@ -122,9 +137,9 @@ export class AppComponent {
         this.stream.getAudioTracks().forEach((track) => {
           console.log('TRACK', track);
 
-          this.peerConnections.forEach((pc) =>
-            pc.addTrack(track, this.stream!)
-          );
+          this.peerConnections.forEach(async (pc) => {
+            pc.addTrack(track, this.stream!);
+          });
         });
     } else {
       await this.audioStreamer.stop();

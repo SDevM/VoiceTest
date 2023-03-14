@@ -33,17 +33,13 @@ export class SocketService {
   //   if (this.listeners.has(event)) this.listeners.get(event)?.delete(key);
   // }
 
-  makeOffer(
-    offer: RTCSessionDescriptionInit,
-    candidate: RTCIceCandidate,
-    id: string
-  ) {
-    // TODO signal offer to server
-    this.socket.emit('offer', candidate, offer, id);
+  sendSession(session: RTCSessionDescriptionInit, id: string, answer: boolean) {
+    this.socket.emit('session', session, id, answer);
+    console.log('CANDIDATE FIRED');
   }
 
-  sendAnswer(answer: RTCSessionDescriptionInit, id: string) {
-    // TODO signal answer to server
-    this.socket.emit('answer', answer, id);
+  sendCandidate(candidate: RTCIceCandidate, id: string) {
+    this.socket.emit('candidate', candidate, id);
+    console.log('CANDIDATE FIRED');
   }
 }
