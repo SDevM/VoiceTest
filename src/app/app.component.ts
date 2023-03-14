@@ -31,8 +31,12 @@ export class AppComponent {
       ) => {
         let pc = this.peerConnections.get(id);
         if (pc) {
-          pc.addIceCandidate(candidate);
-          pc.setRemoteDescription(offer);
+          pc.addIceCandidate(candidate).catch((err) =>
+            console.error(err.message)
+          );
+          pc.setRemoteDescription(offer).catch((err) =>
+            console.error(err.message)
+          );
           pc.createAnswer().then((answer) => {
             pc!.setLocalDescription(answer);
             sService.sendAnswer(answer, id);
@@ -45,7 +49,10 @@ export class AppComponent {
     sService.socket.on(
       'answer',
       (answer: RTCSessionDescriptionInit, id: string) => {
-        this.peerConnections.get(id)?.setRemoteDescription(answer);
+        this.peerConnections
+          .get(id)
+          ?.setRemoteDescription(answer)
+          .catch((err) => console.error(err.message));
       }
     );
 
@@ -61,7 +68,10 @@ export class AppComponent {
               if (event.candidate)
                 sService.makeOffer(offer, event.candidate, id);
             };
-            this.peerConnections.get(id)?.setLocalDescription(offer);
+            this.peerConnections
+              .get(id)
+              ?.setLocalDescription(offer)
+              .catch((err) => console.error(err.message));
           });
 
         this.peerConnections.get(id)!.ontrack = (event) => {
