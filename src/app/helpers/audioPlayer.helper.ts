@@ -1,7 +1,5 @@
-export function mediaPlayer(
-  media: MediaStream,
-  audioElement: HTMLAudioElement
-) {
+export function mediaPlayer(media: MediaStream) {
+  const audioElement = new HTMLAudioElement();
   // set the audio element's source to the blob URL
   audioElement.srcObject = media;
   // play the audio

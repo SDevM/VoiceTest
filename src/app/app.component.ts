@@ -125,16 +125,8 @@ export class AppComponent implements AfterViewInit {
 
         this.peerConnections.get(id)!.ontrack = (event) => {
           console.log('ONTRACK FIRED', id);
-          this.remoteStream.removeTrack(event.track);
           this.remoteStream.addTrack(event.track);
         };
-      });
-
-      if (this.voiceActive && this.stream) console.log('delID');
-      this.stream?.getAudioTracks().forEach((track: MediaStreamTrack) => {
-        console.log('TRACK', track);
-
-        this.peerConnections.forEach((pc) => pc.addTrack(track, this.stream!));
       });
     });
 
@@ -146,7 +138,7 @@ export class AppComponent implements AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    mediaPlayer(this.remoteStream, new HTMLAudioElement());
+    mediaPlayer(this.remoteStream);
   }
 
   async voice() {
