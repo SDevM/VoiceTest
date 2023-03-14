@@ -35,11 +35,11 @@ export class SocketService {
 
   makeOffer(offer: RTCSessionDescriptionInit, id: string) {
     // TODO signal offer to server
-    this.socket.emit('offer', offer);
+    this.socket.emit('offer', offer, id);
   }
 
   sendAnswer(answer: RTCSessionDescriptionInit, id: string) {
     // TODO signal answer to server
-    this.socket.emit('answer', answer);
+    this.socket.emit('answer', answer, id);
   }
 }
