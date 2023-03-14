@@ -140,6 +140,9 @@ export class AppComponent {
         });
     } else {
       await this.audioStreamer.stop();
+      this.peerConnections.forEach((pc) => {
+        pc.getSenders().forEach((sender) => pc.removeTrack(sender));
+      });
       this.voiceActive = false;
     }
     console.log('VOICE ACTIVE', this.voiceActive);
