@@ -96,9 +96,8 @@ export class AppComponent {
               console.log('ONICECANDIDATE');
 
               if (event.candidate) sService.sendCandidate(event.candidate, id);
-              console.log('OFFER SENT', offer);
             };
-
+            
             this.peerConnections
               .get(id)
               ?.setLocalDescription(offer)
