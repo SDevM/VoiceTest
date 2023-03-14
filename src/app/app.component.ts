@@ -97,7 +97,7 @@ export class AppComponent {
 
               if (event.candidate) sService.sendCandidate(event.candidate, id);
             };
-            
+
             this.peerConnections
               .get(id)
               ?.setLocalDescription(offer)
@@ -122,6 +122,7 @@ export class AppComponent {
     // Remove user from peer connections
     sService.socket.on('delID', (id: string) => {
       this.peerConnections.delete(id);
+      console.log('CONNECTION DELETED', id);
     });
   }
 
