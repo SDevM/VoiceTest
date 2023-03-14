@@ -32,8 +32,9 @@ export class AppComponent {
       });
       // if (stream) mediaPlayer(stream, this.GlobalAudio);
       if (stream)
-        this.peerConnection.addTrack(stream.getAudioTracks()[0], stream);
-        this.peerConnection.
+        stream.getAudioTracks().forEach((track) => {
+          this.peerConnection.addTrack(track, stream!);
+        });
     } else {
       await this.audioStreamer.stop();
       this.voiceActive = false;
