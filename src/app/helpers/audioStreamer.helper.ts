@@ -2,6 +2,10 @@ export class AudioStreamer {
   private constraints = { audio: true };
   private audioIn: Promise<MediaStream>;
   private stream?: MediaStream;
+  private started = false;
+  public get isStarted(): boolean {
+    return this.started;
+  }
 
   constructor() {
     this.audioIn = navigator.mediaDevices.getUserMedia(this.constraints);
@@ -23,6 +27,7 @@ export class AudioStreamer {
             .forEach((track) => (track.enabled = true));
           console.log('STARTED');
           resolve(stream);
+          this.started = true;
         });
       }
     });

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component } from '@angular/core';
+import { Component } from '@angular/core';
 import { blobPlayer, mediaPlayer } from './helpers/audioPlayer.helper';
 import { AudioRecorder } from './helpers/audioRecorder.helper';
 import { AudioStreamer } from './helpers/audioStreamer.helper';
@@ -9,7 +9,7 @@ import { SocketService } from './services/socket.service';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
 })
-export class AppComponent implements AfterViewInit {
+export class AppComponent {
   title = 'VoiceTest';
   voiceActive = false;
   audioStreamer = new AudioStreamer();
@@ -22,13 +22,6 @@ export class AppComponent implements AfterViewInit {
   GlobalAudio = new Audio();
 
   constructor(sService: SocketService) {
-    this.audioStreamer
-      .start()
-      .then((Stream) => (this.stream = Stream))
-      .catch((err: Error) => {
-        console.log('STREAMING FAILED', err.message);
-      });
-
     // When recieving an offer, set it as a remote description
     sService.socket.on(
       'session',
@@ -51,7 +44,6 @@ export class AppComponent implements AfterViewInit {
           });
           pc.ontrack = (event) => {
             console.log('ONTRACK FIRED', id);
-            this.remoteStream.removeTrack(event.track);
             this.remoteStream.addTrack(event.track);
           };
 
@@ -137,14 +129,20 @@ export class AppComponent implements AfterViewInit {
     });
   }
 
-  ngAfterViewInit(): void {
-    mediaPlayer(this.remoteStream);
-  }
-
   async voice() {
     if (!this.voiceActive) {
       this.voiceActive = true;
-      this.audioStreamer.resume();
+      if (this.audioStreamer.isStarted) this.audioStreamer.resume();
+      else
+        this.audioStreamer
+          .start()
+          .then((Stream) => {
+            this.stream = Stream;
+            mediaPlayer(this.stream);
+          })
+          .catch((err: Error) => {
+            console.log('STREAMING FAILED', err.message);
+          });
     } else {
       this.voiceActive = false;
       await this.audioStreamer.pause();
@@ -162,7 +160,7 @@ export class AppComponent implements AfterViewInit {
     if (!this.started) this.audioRecorder.start();
     else if (this.started) {
       let audio = this.audioRecorder.stop();
-      if (audio) blobPlayer(audio, this.GlobalAudio);
+      if (audio) blobPlayer(audio);
       this.paused = false;
     }
     this.started = !this.started;
