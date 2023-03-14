@@ -30,6 +30,8 @@ export class AppComponent {
         candidate: RTCIceCandidate,
         id: string
       ) => {
+        console.log('offer', candidate);
+
         let pc = this.peerConnections.get(id);
         if (pc) {
           pc.addIceCandidate(candidate).catch((err) =>
@@ -50,6 +52,8 @@ export class AppComponent {
     sService.socket.on(
       'answer',
       (answer: RTCSessionDescriptionInit, id: string) => {
+        console.log('answer');
+
         this.peerConnections
           .get(id)
           ?.setRemoteDescription(answer)
@@ -59,6 +63,8 @@ export class AppComponent {
 
     // Add a new user to peer connections
     sService.socket.on('addID', (Ids: string[]) => {
+      console.log('addID');
+
       Ids.forEach((id) => {
         this.peerConnections.set(
           id,
@@ -77,6 +83,7 @@ export class AppComponent {
             this.peerConnections.get(id)!.onicecandidate = (event) => {
               if (event.candidate)
                 sService.makeOffer(offer, event.candidate, id);
+              console.log('OFFER SENT', offer);
             };
             this.peerConnections
               .get(id)
@@ -90,14 +97,12 @@ export class AppComponent {
         };
       });
 
-      if (this.voiceActive && this.stream)
-        this.stream.getAudioTracks().forEach((track) => {
-          console.log('TRACK', track);
+      if (this.voiceActive && this.stream) console.log('delID');
+      this.stream?.getAudioTracks().forEach((track: MediaStreamTrack) => {
+        console.log('TRACK', track);
 
-          this.peerConnections.forEach((pc) =>
-            pc.addTrack(track, this.stream!)
-          );
-        });
+        this.peerConnections.forEach((pc) => pc.addTrack(track, this.stream!));
+      });
     });
 
     // Remove user from peer connections
