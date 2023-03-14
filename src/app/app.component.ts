@@ -28,6 +28,7 @@ export class AppComponent {
         if (pc) {
           pc.setRemoteDescription(offer);
           pc.createAnswer().then((answer) => {
+            pc.setLocalDescription(answer);
             sService.sendAnswer(answer);
           });
         }
@@ -49,7 +50,10 @@ export class AppComponent {
         this.peerConnections
           .get(id)
           ?.createOffer()
-          .then((offer) => sService.makeOffer(offer));
+          .then((offer) => {
+            this.peerConnections.get(id)?.setLocalDescription(offer);
+            sService.makeOffer(offer);
+          });
       });
     });
 
