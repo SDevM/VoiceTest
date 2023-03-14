@@ -23,12 +23,17 @@ export class AppComponent {
     // When recieving an offer, set it as a remote description
     sService.socket.on(
       'offer',
-      (offer: RTCSessionDescriptionInit, id: string) => {
-        const pc = this.peerConnections.get(id);
+      (
+        offer: RTCSessionDescriptionInit,
+        candidate: RTCIceCandidate,
+        id: string
+      ) => {
+        let pc = this.peerConnections.get(id);
         if (pc) {
+          pc.addIceCandidate(candidate);
           pc.setRemoteDescription(offer);
           pc.createAnswer().then((answer) => {
-            pc.setLocalDescription(answer);
+            pc!.setLocalDescription(answer);
             sService.sendAnswer(answer, id);
           });
         }
@@ -51,9 +56,13 @@ export class AppComponent {
           .get(id)
           ?.createOffer()
           .then((offer) => {
+            this.peerConnections.get(id)!.onicecandidate = (event) => {
+              if (event.candidate)
+                sService.makeOffer(offer, event.candidate, id);
+            };
             this.peerConnections.get(id)?.setLocalDescription(offer);
-            sService.makeOffer(offer, id);
           });
+
         this.peerConnections.get(id)!.ontrack = (event) => {
           event.streams.forEach((stream) =>
             mediaPlayer(stream, new HTMLAudioElement())

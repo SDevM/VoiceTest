@@ -33,9 +33,13 @@ export class SocketService {
   //   if (this.listeners.has(event)) this.listeners.get(event)?.delete(key);
   // }
 
-  makeOffer(offer: RTCSessionDescriptionInit, id: string) {
+  makeOffer(
+    offer: RTCSessionDescriptionInit,
+    candidate: RTCIceCandidate,
+    id: string
+  ) {
     // TODO signal offer to server
-    this.socket.emit('offer', offer, id);
+    this.socket.emit('offer', candidate, offer, id);
   }
 
   sendAnswer(answer: RTCSessionDescriptionInit, id: string) {
