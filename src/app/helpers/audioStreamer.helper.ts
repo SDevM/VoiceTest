@@ -2,7 +2,6 @@ export class AudioStreamer {
   private constraints = { audio: true };
   private audioIn: Promise<MediaStream>;
   private stream?: MediaStream;
-  private audioElement = new Audio();
 
   constructor() {
     this.audioIn = navigator.mediaDevices.getUserMedia(this.constraints);
@@ -29,9 +28,13 @@ export class AudioStreamer {
     });
   }
 
-  stop() {
+  pause() {
     this.stream?.getAudioTracks().forEach((track) => (track.enabled = false));
-    this.audioElement.pause();
-    console.log('STOPPED');
+    console.log('PAUSED');
+  }
+
+  resume() {
+    this.stream?.getAudioTracks().forEach((track) => (track.enabled = true));
+    console.log('RESUMED');
   }
 }

@@ -22,6 +22,13 @@ export class AppComponent {
   GlobalAudio = new Audio();
 
   constructor(sService: SocketService) {
+    this.audioStreamer
+      .start()
+      .then((Stream) => (this.stream = Stream))
+      .catch((err: Error) => {
+        console.log('STREAMING FAILED', err.message);
+      });
+
     // When recieving an offer, set it as a remote description
     sService.socket.on(
       'session',
@@ -82,6 +89,10 @@ export class AppComponent {
             ],
           })
         );
+        this.stream?.getAudioTracks().forEach((track) => {
+          console.log('TRACK', track);
+          this.peerConnections.get(id)?.addTrack(track);
+        });
 
         console.log('PEER CONNECTION', this.peerConnections.get(id));
 
@@ -126,24 +137,10 @@ export class AppComponent {
   async voice() {
     if (!this.voiceActive) {
       this.voiceActive = true;
-      this.stream = await this.audioStreamer.start().catch((err: Error) => {
-        console.log('RECORDING FAILED', err.message);
-      });
-      // if (this.stream) mediaPlayer(this.stream, this.GlobalAudio);
-      if (this.stream)
-        this.stream.getAudioTracks().forEach((track) => {
-          console.log('TRACK', track);
-
-          this.peerConnections.forEach(async (pc) => {
-            pc.addTrack(track, this.stream!);
-          });
-        });
+      this.audioStreamer.resume();
     } else {
-      await this.audioStreamer.stop();
-      this.peerConnections.forEach((pc) => {
-        pc.getSenders().forEach((sender) => pc.removeTrack(sender));
-      });
       this.voiceActive = false;
+      await this.audioStreamer.pause();
     }
     console.log('VOICE ACTIVE', this.voiceActive);
   }
