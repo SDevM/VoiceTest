@@ -15,6 +15,7 @@ export class AppComponent {
   audioStreamer = new AudioStreamer();
   audioRecorder = new AudioRecorder(250);
   stream: MediaStream | void = undefined;
+  remoteStream: MediaStream = new MediaStream();
   paused = false;
   started = false;
   peerConnections: Map<string, RTCPeerConnection> = new Map();
@@ -59,7 +60,16 @@ export class AppComponent {
     // Add a new user to peer connections
     sService.socket.on('addID', (Ids: string[]) => {
       Ids.forEach((id) => {
-        this.peerConnections.set(id, new RTCPeerConnection());
+        this.peerConnections.set(
+          id,
+          new RTCPeerConnection({
+            iceServers: [
+              {
+                urls: 'stun:stun.l.google.com:19302',
+              },
+            ],
+          })
+        );
         this.peerConnections
           .get(id)
           ?.createOffer()
@@ -76,10 +86,7 @@ export class AppComponent {
 
         this.peerConnections.get(id)!.ontrack = (event) => {
           console.log('ONTRACK FIRED', id);
-
-          event.streams.forEach((stream) =>
-            mediaPlayer(stream, new HTMLAudioElement())
-          );
+          this.remoteStream.addTrack(event.track);
         };
       });
 
