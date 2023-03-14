@@ -28,6 +28,7 @@ export class AppComponent {
       .catch((err: Error) => {
         console.log('STREAMING FAILED', err.message);
       });
+    mediaPlayer(this.remoteStream, new HTMLAudioElement());
 
     // When recieving an offer, set it as a remote description
     sService.socket.on(
@@ -49,6 +50,11 @@ export class AppComponent {
             console.log('TRACK', track);
             pc.addTrack(track);
           });
+          pc.ontrack = (event) => {
+            console.log('ONTRACK FIRED', id);
+            this.remoteStream.removeTrack(event.track);
+            this.remoteStream.addTrack(event.track);
+          };
 
           pc.setRemoteDescription(session).catch((err) =>
             console.error(err.message)
@@ -120,6 +126,7 @@ export class AppComponent {
 
         this.peerConnections.get(id)!.ontrack = (event) => {
           console.log('ONTRACK FIRED', id);
+          this.remoteStream.removeTrack(event.track);
           this.remoteStream.addTrack(event.track);
         };
       });
