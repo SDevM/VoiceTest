@@ -54,6 +54,11 @@ export class AppComponent {
             this.peerConnections.get(id)?.setLocalDescription(offer);
             sService.makeOffer(offer, id);
           });
+        this.peerConnections.get(id)!.ontrack = (event) => {
+          event.streams.forEach((stream) =>
+            mediaPlayer(stream, new HTMLAudioElement())
+          );
+        };
       });
     });
 
