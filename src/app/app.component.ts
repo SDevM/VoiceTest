@@ -43,7 +43,7 @@ export class AppComponent {
             console.error(err.message)
           );
           pc.createAnswer().then((answer) => {
-            pc!.setLocalDescription(answer);
+            // pc!.setLocalDescription(answer);
             sService.sendSession(answer, id, true);
           });
         }
