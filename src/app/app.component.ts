@@ -44,7 +44,8 @@ export class AppComponent {
           });
           pc.ontrack = (event) => {
             console.log('ONTRACK FIRED', id);
-            this.remoteStream.addTrack(event.track);
+            if (!this.stream!.getAudioTracks().includes(event.track))
+              this.remoteStream.addTrack(event.track);
           };
 
           pc.setRemoteDescription(session).catch((err) =>
