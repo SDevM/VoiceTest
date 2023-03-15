@@ -26,6 +26,9 @@ export class AppComponent {
   GlobalAudio = new Audio();
 
   constructor(sService: SocketService) {
+    // Set your peer id
+    sService.setId(this.me?.id);
+
     // Upon joing the socket, get a key
     sService.socket.on('new', (key: string, peers: string[]) => {
       console.log('Peerjs Initialized.');
