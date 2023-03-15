@@ -56,7 +56,10 @@ export class AppComponent {
             console.log('ONTRACK FIRED', this.remoteStream.getAudioTracks());
             // mediaPlayer(this.remoteStream);
           };
-
+          pc.addEventListener('icecandidate', (event) => {
+            if (event.candidate) sService.sendCandidate(event.candidate, id);
+            else console.log('ICE CANDIDATE FAILURE');
+          });
           pc.setRemoteDescription(session).catch((err) =>
             console.error(err.message)
           );
@@ -112,11 +115,13 @@ export class AppComponent {
           .get(id)
           ?.createOffer()
           .then((offer) => {
-            this.peerConnections.get(id)!.onicecandidate = (event) => {
-              console.log('ONICECANDIDATE');
-
-              if (event.candidate) sService.sendCandidate(event.candidate, id);
-            };
+            this.peerConnections
+              .get(id)!
+              .addEventListener('icecandidate', (event) => {
+                if (event.candidate)
+                  sService.sendCandidate(event.candidate, id);
+                else console.log('ICE CANDIDATE FAILURE');
+              });
 
             this.peerConnections
               .get(id)
