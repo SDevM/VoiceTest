@@ -54,9 +54,12 @@ export class AppComponent {
       peers.forEach((peer, i) => {
         console.log('Peer #' + i, peer);
         this.peers.add(peer);
-        console.log('New peer', peer);
-
         this.peerConnections.set(peer, this.me.connect(peer));
+        this.peerConnections
+          .get(peer)
+          ?.on('data', (data) => blobPlayer(data as Blob));
+        console.log('New Channel Participants:', [peer, this.me.id].sort());
+
         sService.requestConnection(peer);
         sService.invitePeer(peer);
       });
@@ -65,7 +68,12 @@ export class AppComponent {
 
     // Upon recieving a connect request
     sService.socket.on('channel', (peer: string) => {
+      console.log('New Channel Participants:', [peer, this.me.id].sort());
+
       this.peerConnections.set(peer, this.me.connect(peer));
+      this.peerConnections
+        .get(peer)
+        ?.on('data', (data) => blobPlayer(data as Blob));
     });
 
     // When recieving an offer, set it as a remote description
@@ -76,11 +84,10 @@ export class AppComponent {
 
       if (!response) {
         sService.respondPeer(peer);
-        console.log('Peer invitation responded to', peer);
-      } else {
         this.peers.add(peer);
-        console.log('New peer', peer);
-        console.log('Invitation accepted by', peer);
+        console.log('channel', peer);
+      } else {
+        console.log('Peer invitation responded to', peer);
       }
       if (!this.stream) return;
       this.mediaConnections.set(peer, this.me.call(peer, this.stream));
@@ -170,7 +177,11 @@ export class AppComponent {
       let audio = this.audioRecorder.stop();
       console.log('Sending vn to peers', this.peers.keys());
 
-      this.peerConnections.forEach((connection) => connection.send(audio));
+      this.peerConnections.forEach((connection) => {
+        console.log('Audio sent to', connection.peer);
+
+        connection.send(audio);
+      });
       this.paused = false;
     }
     this.started = !this.started;
