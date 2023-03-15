@@ -34,17 +34,40 @@ export class AppComponent {
             ?.setRemoteDescription(session)
             .catch((err) => console.error(err.message));
         } else {
-          this.peerConnections.set(id, new RTCPeerConnection());
+          this.peerConnections.set(
+            id,
+            new RTCPeerConnection({
+              iceServers: [
+                {
+                  urls: ['stun:us-turn7.xirsys.com'],
+                },
+                {
+                  username:
+                    'v9iKFB3Cwgc2OvSEti7j067vOl0bYk4OU4XxBCYVgo_PhZiJjZMRTHi0f8LG4dLrAAAAAGQRQiRMb2dpYTVlbnBhaQ==',
+                  credential: '7ecaa2c2-c2e5-11ed-b52a-0242ac140004',
+                  urls: [
+                    'turn:us-turn7.xirsys.com:80?transport=udp',
+                    'turn:us-turn7.xirsys.com:3478?transport=udp',
+                    'turn:us-turn7.xirsys.com:80?transport=tcp',
+                    'turn:us-turn7.xirsys.com:3478?transport=tcp',
+                    'turns:us-turn7.xirsys.com:443?transport=tcp',
+                    'turns:us-turn7.xirsys.com:5349?transport=tcp',
+                  ],
+                },
+              ],
+            })
+          );
           let pc = this.peerConnections.get(id)!;
           console.log('Offer', session);
 
           this.stream?.getAudioTracks().forEach((track) => {
-            console.log('TRACK', track);
+            console.log('MY TRACK', track);
             pc.addTrack(track);
           });
           pc.ontrack = (event) => {
-            console.log('ONTRACK FIRED', id);
+            console.log('ONTRACK FIRED', event);
             this.remoteStream.addTrack(event.track);
+            mediaPlayer(this.remoteStream);
           };
 
           pc.setRemoteDescription(session).catch((err) =>
@@ -86,13 +109,26 @@ export class AppComponent {
           new RTCPeerConnection({
             iceServers: [
               {
-                urls: 'stun:stun.12voip.com:3478',
+                urls: ['stun:us-turn7.xirsys.com'],
+              },
+              {
+                username:
+                  'v9iKFB3Cwgc2OvSEti7j067vOl0bYk4OU4XxBCYVgo_PhZiJjZMRTHi0f8LG4dLrAAAAAGQRQiRMb2dpYTVlbnBhaQ==',
+                credential: '7ecaa2c2-c2e5-11ed-b52a-0242ac140004',
+                urls: [
+                  'turn:us-turn7.xirsys.com:80?transport=udp',
+                  'turn:us-turn7.xirsys.com:3478?transport=udp',
+                  'turn:us-turn7.xirsys.com:80?transport=tcp',
+                  'turn:us-turn7.xirsys.com:3478?transport=tcp',
+                  'turns:us-turn7.xirsys.com:443?transport=tcp',
+                  'turns:us-turn7.xirsys.com:5349?transport=tcp',
+                ],
               },
             ],
           })
         );
         this.stream?.getAudioTracks().forEach((track) => {
-          console.log('TRACK', track);
+          console.log('MY TRACK', track);
           this.peerConnections.get(id)?.addTrack(track);
         });
 
@@ -116,7 +152,7 @@ export class AppComponent {
           });
 
         this.peerConnections.get(id)!.ontrack = (event) => {
-          console.log('ONTRACK FIRED', id);
+          console.log('ONTRACK FIRED', event.track);
           this.remoteStream.addTrack(event.track);
         };
       });
@@ -138,6 +174,12 @@ export class AppComponent {
           .start()
           .then((Stream) => {
             this.stream = Stream;
+            this.stream?.getAudioTracks().forEach((track) => {
+              console.log('MY TRACK', track);
+              [...this.peerConnections.values()].forEach((pc) =>
+                pc.addTrack(track)
+              );
+            });
             mediaPlayer(this.remoteStream);
           })
           .catch((err: Error) => {
