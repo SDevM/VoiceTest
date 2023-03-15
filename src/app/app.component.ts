@@ -39,7 +39,7 @@ export class AppComponent {
             new RTCPeerConnection({
               iceServers: [
                 {
-                  urls: ['stun:us-turn7.xirsys.com'],
+                  urls: ['stun:us-turn7.xirsys.com:3478'],
                 },
               ],
             })
@@ -96,7 +96,7 @@ export class AppComponent {
           new RTCPeerConnection({
             iceServers: [
               {
-                urls: ['stun:us-turn7.xirsys.com'],
+                urls: ['stun:us-turn7.xirsys.com:3478'],
               },
             ],
           })
