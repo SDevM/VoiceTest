@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import Peer, { MediaConnection } from 'peerjs';
+import Peer, { DataConnection, MediaConnection } from 'peerjs';
 import { blobPlayer, mediaPlayer } from './helpers/audioPlayer.helper';
 import { AudioRecorder } from './helpers/audioRecorder.helper';
 import { AudioStreamer } from './helpers/audioStreamer.helper';
@@ -22,8 +22,9 @@ export class AppComponent {
   me: Peer = new Peer({
     debug: 1,
   });
-  peers = new Set<string>();
   mediaConnections: Map<string, MediaConnection> = new Map();
+  peerConnections: Map<string, DataConnection> = new Map();
+  peers = new Set<string>();
   GlobalAudio = new Audio();
 
   constructor(sService: SocketService) {
@@ -37,6 +38,7 @@ export class AppComponent {
     // Respond to call
     this.me.on('call', (incoming) => {
       console.log('Call recieved', incoming.peer);
+      this.mediaConnections.set(incoming.peer, incoming);
 
       incoming.answer(this.stream);
       incoming.on('stream', (stream) => {
@@ -48,13 +50,22 @@ export class AppComponent {
     // Upon joing the socket, get a key
     sService.socket.on('new', (key: string, peers: string[]) => {
       console.log('Peerjs Accepted.', key);
-      console.log('Peers: ', peers);
 
       peers.forEach((peer, i) => {
         console.log('Peer #' + i, peer);
         this.peers.add(peer);
+        console.log('New peer', peer);
+
+        this.peerConnections.set(peer, this.me.connect(peer));
+        sService.requestConnection(peer);
         sService.invitePeer(peer);
       });
+      console.log('Peers: ', peers);
+    });
+
+    // Upon recieving a connect request
+    sService.socket.on('connect', (peer: string) => {
+      this.peerConnections.set(peer, this.me.connect(peer));
     });
 
     // When recieving an offer, set it as a remote description
@@ -63,14 +74,14 @@ export class AppComponent {
         response ? 'Peer response recieved.' : 'Peer invite recieved'
       );
 
-      if (this.mediaConnections.has(peer)) return;
       if (!response) {
         sService.respondPeer(peer);
         console.log('Peer invitation responded to', peer);
       } else {
         this.peers.add(peer);
+        console.log('New peer', peer);
+        console.log('Invitation accepted by', peer);
       }
-      // this.mediaConnections.set(peer, this.me?.connect(peer)!);
       if (!this.stream) return;
       this.mediaConnections.set(peer, this.me.call(peer, this.stream));
       const mc = this.mediaConnections.get(peer);
@@ -88,20 +99,20 @@ export class AppComponent {
       //     pc.send(data.data);
       //   };
       // });
-      // pc?.on('data', function (data) {
-      //   console.log('Data recieved from', pc.peer);
+      // this.peerConnections.get(peer)?.on('data', function (data) {
+      //   console.log('Data recieved from', peer);
 
       //   const audioBlob = new Blob([data as Blob], {
       //     type: 'audio/webm;codecs=opus',
       //   });
       //   blobPlayer(audioBlob);
       // });
-      console.log('New Call Started', mc);
     });
 
     // Remove user from peer connections
     sService.socket.on('delID', (peer: string) => {
       this.mediaConnections.delete(peer);
+      this.peerConnections.delete(peer);
       this.peers.delete(peer);
       console.log('Connection deleted for', peer);
     });
@@ -117,11 +128,24 @@ export class AppComponent {
         this.audioStreamer
           .start()
           .then((stream) => {
+            console.log('New stream.', stream);
+
             this.stream = stream;
-            this.mediaConnections.forEach((mc) => {
-              mc.answer(this.stream);
+            console.log('CULPRITS');
+            console.log('MediaConnections', this.mediaConnections);
+            console.log('Peers', this.peers);
+
+            const wanted: string[] = [];
+            this.mediaConnections.forEach((mc, key) => {
+              console.log('Destroy old call from', mc.peer);
+              mc.close();
+              wanted.push(key);
             });
-            this.peers.forEach((peer) => this.me.call(peer, this.stream!));
+            wanted.forEach((key) => this.mediaConnections.delete(key));
+            this.peers.forEach((peer) => {
+              this.mediaConnections.set(peer, this.me.call(peer, this.stream!));
+              console.log('Call established to', peer);
+            });
           })
           .catch((err: Error) => {
             console.error('Streaming failed.', err.message);
@@ -144,7 +168,9 @@ export class AppComponent {
     if (!this.started) this.audioRecorder.start();
     else if (this.started) {
       let audio = this.audioRecorder.stop();
-      if (audio) blobPlayer(audio);
+      console.log('Sending vn to peers', this.peers.keys());
+
+      this.peerConnections.forEach((connection) => connection.send(audio));
       this.paused = false;
     }
     this.started = !this.started;
