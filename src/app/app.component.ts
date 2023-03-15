@@ -16,10 +16,10 @@ export class AppComponent {
   audioStreamer = new AudioStreamer();
   audioRecorder = new AudioRecorder(250);
   stream?: MediaStream;
-  rec?: MediaRecorder;
   paused = false;
   started = false;
   me: Peer = new Peer({
+    secure: true,
     debug: 1,
   });
   mediaConnections: Map<string, MediaConnection> = new Map();
@@ -40,6 +40,9 @@ export class AppComponent {
       console.log('Call recieved', incoming.peer);
       this.mediaConnections.set(incoming.peer, incoming);
 
+      incoming.on('close', () => {
+        this.mediaConnections.delete(incoming.peer);
+      });
       incoming.answer(this.stream);
       incoming.on('stream', (stream) => {
         // Do something with this audio stream
@@ -130,7 +133,6 @@ export class AppComponent {
       this.voiceActive = true;
       if (this.audioStreamer.isStarted) {
         this.audioStreamer.resume();
-        this.rec?.resume();
       } else
         this.audioStreamer
           .start()
@@ -159,7 +161,6 @@ export class AppComponent {
           });
     } else {
       this.voiceActive = false;
-      this.rec?.pause();
       await this.audioStreamer.pause();
     }
     console.log('Voice active.', this.voiceActive);
