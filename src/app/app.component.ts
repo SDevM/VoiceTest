@@ -16,7 +16,6 @@ export class AppComponent {
   audioStreamer = new AudioStreamer();
   audioRecorder = new AudioRecorder(250);
   stream: MediaStream | void = undefined;
-  remoteStream: MediaStream = new MediaStream();
   paused = false;
   started = false;
   me?: Peer;
@@ -27,8 +26,13 @@ export class AppComponent {
   constructor(sService: SocketService) {
     // Upon joing the socket, get a key
     sService.socket.on('new', (key: string, peers: string[]) => {
-      this.me = new Peer({ key: key, debug: 3 });
-      peers.forEach((peer) => {
+      console.log('Peerjs Initialized.');
+
+      this.me = new Peer({
+        key: key,
+        debug: 3,
+      });
+      peers?.forEach((peer) => {
         console.log('CURRENT ID', peer);
         sService.invitePeer(peer);
       });
@@ -36,17 +40,28 @@ export class AppComponent {
 
     // When recieving an offer, set it as a remote description
     sService.socket.on('peer', (peer: string, response: boolean) => {
+      console.log(
+        response ? 'Peer response recieved.' : 'Peer invite recieved'
+      );
+
       if (this.peerConnections.has(peer)) return;
       this.peerConnections.set(peer, this.me?.connect(peer)!);
       const pc = this.peerConnections.get(peer);
       pc?.on('open', () => {
+        console.log('Connection open', pc.peer);
+
         pc.send(this.stream);
       });
       pc?.on('data', (data) => {
+        console.log('Data recieved from', pc.peer);
+
         const dataStream: MediaStream = data as MediaStream;
         mediaPlayer(dataStream);
       });
-      if (!response) sService.respondPeer(peer);
+      if (!response) {
+        sService.respondPeer(peer);
+        console.log('Peer invitation responded to.', peer);
+      }
     });
 
     // Remove user from peer connections
@@ -66,7 +81,6 @@ export class AppComponent {
           .then((Stream) => {
             this.stream = Stream;
             this.peerConnections.forEach((pc) => pc.send(this.stream));
-            mediaPlayer(this.remoteStream);
           })
           .catch((err: Error) => {
             console.error('STREAMING FAILED', err.message);

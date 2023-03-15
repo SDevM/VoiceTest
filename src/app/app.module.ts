@@ -9,8 +9,8 @@ import { AppComponent } from './app.component';
   imports: [
     BrowserModule,
     SocketIoModule.forRoot({
-      // url: 'http://localhost:3000',
-      url: 'https://voice-test.herokuapp.com/',
+      url: 'http://localhost:3000',
+      // url: 'https://voice-test.herokuapp.com/',
       options: { transports: ['websocket'] },
     }),
   ],
