@@ -65,9 +65,9 @@ export class AppComponent {
             pc.addTrack(track);
           });
           pc.ontrack = (event) => {
-            console.log('ONTRACK FIRED', event);
             this.remoteStream.addTrack(event.track);
-            mediaPlayer(this.remoteStream);
+            console.log('ONTRACK FIRED', this.remoteStream.getAudioTracks());
+            // mediaPlayer(this.remoteStream);
           };
 
           pc.setRemoteDescription(session).catch((err) =>
@@ -118,10 +118,10 @@ export class AppComponent {
                 urls: [
                   'turn:us-turn7.xirsys.com:80?transport=udp',
                   'turn:us-turn7.xirsys.com:3478?transport=udp',
-                  'turn:us-turn7.xirsys.com:80?transport=tcp',
-                  'turn:us-turn7.xirsys.com:3478?transport=tcp',
-                  'turns:us-turn7.xirsys.com:443?transport=tcp',
-                  'turns:us-turn7.xirsys.com:5349?transport=tcp',
+                  // 'turn:us-turn7.xirsys.com:80?transport=tcp',
+                  // 'turn:us-turn7.xirsys.com:3478?transport=tcp',
+                  // 'turns:us-turn7.xirsys.com:443?transport=tcp',
+                  // 'turns:us-turn7.xirsys.com:5349?transport=tcp',
                 ],
               },
             ],
@@ -154,6 +154,7 @@ export class AppComponent {
         this.peerConnections.get(id)!.ontrack = (event) => {
           console.log('ONTRACK FIRED', event.track);
           this.remoteStream.addTrack(event.track);
+          // mediaPlayer(this.remoteStream);
         };
       });
     });
@@ -183,7 +184,7 @@ export class AppComponent {
             mediaPlayer(this.remoteStream);
           })
           .catch((err: Error) => {
-            console.log('STREAMING FAILED', err.message);
+            console.error('STREAMING FAILED', err.message);
           });
     } else {
       this.voiceActive = false;
