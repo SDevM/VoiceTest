@@ -21,18 +21,23 @@ export class AppComponent {
   me: Peer = new Peer({
     debug: 3,
   });
-  key?: string;
   peerConnections: Map<string, DataConnection> = new Map();
   GlobalAudio = new Audio();
 
   constructor(sService: SocketService) {
     // Set your peer id
-    sService.setId(this.me?.id);
+    this.me.on('open', () => {
+      console.log('Peerjs Initialized');
+
+      sService.setId(this.me?.id);
+    });
 
     // Upon joing the socket, get a key
     sService.socket.on('new', (key: string, peers: string[]) => {
-      console.log('Peerjs Initialized.');
-      peers?.forEach((peer, i) => {
+      console.log('Peerjs Accepted.', key);
+      console.log('Peers: ', peers);
+
+      peers.forEach((peer, i) => {
         console.log('Peer #' + i, peer);
         sService.invitePeer(peer);
       });
