@@ -32,8 +32,8 @@ export class AppComponent {
         key: key,
         debug: 3,
       });
-      peers?.forEach((peer) => {
-        console.log('CURRENT ID', peer);
+      peers?.forEach((peer, i) => {
+        console.log('Peer #' + i, peer);
         sService.invitePeer(peer);
       });
     });
@@ -60,14 +60,14 @@ export class AppComponent {
       });
       if (!response) {
         sService.respondPeer(peer);
-        console.log('Peer invitation responded to.', peer);
+        console.log('Peer invitation responded to', peer);
       }
     });
 
     // Remove user from peer connections
     sService.socket.on('delID', (peer: string) => {
       this.peerConnections.delete(peer);
-      console.log('CONNECTION DELETED', peer);
+      console.log('Connection deleted for', peer);
     });
   }
 
@@ -83,13 +83,13 @@ export class AppComponent {
             this.peerConnections.forEach((pc) => pc.send(this.stream));
           })
           .catch((err: Error) => {
-            console.error('STREAMING FAILED', err.message);
+            console.error('Streaming failed.', err.message);
           });
     } else {
       this.voiceActive = false;
       await this.audioStreamer.pause();
     }
-    console.log('VOICE ACTIVE', this.voiceActive);
+    console.log('Voice active.', this.voiceActive);
   }
 
   toggle() {
