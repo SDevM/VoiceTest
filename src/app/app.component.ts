@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import Peer, { DataConnection } from 'peerjs';
 import { blobPlayer, mediaPlayer } from './helpers/audioPlayer.helper';
 import { AudioRecorder } from './helpers/audioRecorder.helper';
 import { AudioStreamer } from './helpers/audioStreamer.helper';
@@ -18,130 +19,40 @@ export class AppComponent {
   remoteStream: MediaStream = new MediaStream();
   paused = false;
   started = false;
-  peerConnections: Map<string, RTCPeerConnection> = new Map();
+  me?: Peer;
+  key?: string;
+  peerConnections: Map<string, DataConnection> = new Map();
   GlobalAudio = new Audio();
 
   constructor(sService: SocketService) {
-    // When recieving an offer, set it as a remote description
-    sService.socket.on(
-      'session',
-      (session: RTCSessionDescriptionInit, id: string, answer: boolean) => {
-        if (answer) {
-          console.log('Answer', session);
-
-          this.peerConnections
-            .get(id)
-            ?.setRemoteDescription(session)
-            .catch((err) => console.error(err.message));
-        } else {
-          this.peerConnections.set(
-            id,
-            new RTCPeerConnection({
-              iceServers: [
-                {
-                  urls: ['stun:us-turn7.xirsys.com:3478'],
-                },
-              ],
-            })
-          );
-          let pc = this.peerConnections.get(id)!;
-          console.log('Offer', session);
-
-          this.stream?.getAudioTracks().forEach((track) => {
-            console.log('MY TRACK', track);
-            pc.addTrack(track);
-          });
-          pc.ontrack = (event) => {
-            this.remoteStream.addTrack(event.track);
-            console.log('ONTRACK FIRED', this.remoteStream.getAudioTracks());
-            // mediaPlayer(this.remoteStream);
-          };
-          pc.addEventListener('icecandidate', (event) => {
-            if (event.candidate) sService.sendCandidate(event.candidate, id);
-            else console.log('ICE CANDIDATE FAILURE');
-          });
-          pc.setRemoteDescription(session).catch((err) =>
-            console.error(err.message)
-          );
-          pc.createAnswer().then((answer) => {
-            pc!.setLocalDescription(answer);
-            sService.sendSession(answer, id, true);
-          });
-        }
-      }
-    );
-
-    // When recieving a candidate, set it on the apropriate pc
-    sService.socket.on(
-      'candidate',
-      (candidate: RTCIceCandidate, id: string) => {
-        console.log('ICE CANDIDATE DETECTED', candidate);
-        if (this.peerConnections.has(id)) {
-          this.peerConnections
-            .get(id)!
-            .addIceCandidate(candidate)
-            .catch((err) => console.error(err.message));
-        } else {
-          console.log('ICE CANDIDATE FAILED');
-        }
-      }
-    );
-
-    // Add a new user to peer connections
-    sService.socket.on('addID', async (Ids: string[]) => {
-      console.log('addID');
-
-      Ids.forEach((id) => {
-        console.log('CURRENT ID', id);
-
-        this.peerConnections.set(
-          id,
-          new RTCPeerConnection({
-            iceServers: [
-              {
-                urls: ['stun:us-turn7.xirsys.com:3478'],
-              },
-            ],
-          })
-        );
-        this.stream?.getAudioTracks().forEach((track) => {
-          console.log('MY TRACK', track);
-          this.peerConnections.get(id)?.addTrack(track);
-        });
-
-        console.log('PEER CONNECTION', this.peerConnections.get(id));
-
-        this.peerConnections
-          .get(id)
-          ?.createOffer()
-          .then((offer) => {
-            this.peerConnections
-              .get(id)!
-              .addEventListener('icecandidate', (event) => {
-                if (event.candidate)
-                  sService.sendCandidate(event.candidate, id);
-                else console.log('ICE CANDIDATE FAILURE');
-              });
-
-            this.peerConnections
-              .get(id)
-              ?.setLocalDescription(offer)
-              .then(() => sService.sendSession(offer, id, false))
-              .catch((err) => console.error(err.message));
-          });
-
-        this.peerConnections.get(id)!.ontrack = (event) => {
-          console.log('ONTRACK FIRED', event.track);
-          this.remoteStream.addTrack(event.track);
-          // mediaPlayer(this.remoteStream);
-        };
+    // Upon joing the socket, get a key
+    sService.socket.on('new', (key: string, peers: string[]) => {
+      this.me = new Peer({ key: key, debug: 3 });
+      peers.forEach((peer) => {
+        console.log('CURRENT ID', peer);
+        sService.invitePeer(peer);
       });
     });
 
+    // When recieving an offer, set it as a remote description
+    sService.socket.on('peer', (peer: string, response: boolean) => {
+      if (this.peerConnections.has(peer)) return;
+      this.peerConnections.set(peer, this.me?.connect(peer)!);
+      const pc = this.peerConnections.get(peer);
+      pc?.on('open', () => {
+        pc.send(this.stream);
+      });
+      pc?.on('data', (data) => {
+        const dataStream: MediaStream = data as MediaStream;
+        mediaPlayer(dataStream);
+      });
+      if (!response) sService.respondPeer(peer);
+    });
+
     // Remove user from peer connections
-    sService.socket.on('delID', (id: string) => {
-      this.peerConnections.delete(id);
-      console.log('CONNECTION DELETED', id);
+    sService.socket.on('delID', (peer: string) => {
+      this.peerConnections.delete(peer);
+      console.log('CONNECTION DELETED', peer);
     });
   }
 
@@ -154,12 +65,7 @@ export class AppComponent {
           .start()
           .then((Stream) => {
             this.stream = Stream;
-            this.stream?.getAudioTracks().forEach((track) => {
-              console.log('MY TRACK', track);
-              [...this.peerConnections.values()].forEach((pc) =>
-                pc.addTrack(track)
-              );
-            });
+            this.peerConnections.forEach((pc) => pc.send(this.stream));
             mediaPlayer(this.remoteStream);
           })
           .catch((err: Error) => {
@@ -183,6 +89,9 @@ export class AppComponent {
     else if (this.started) {
       let audio = this.audioRecorder.stop();
       if (audio) blobPlayer(audio);
+      this.peerConnections.forEach((keyVal) => {
+        keyVal.send(audio);
+      });
       this.paused = false;
     }
     this.started = !this.started;

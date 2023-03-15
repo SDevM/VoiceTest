@@ -33,13 +33,13 @@ export class SocketService {
   //   if (this.listeners.has(event)) this.listeners.get(event)?.delete(key);
   // }
 
-  sendSession(session: RTCSessionDescriptionInit, id: string, answer: boolean) {
-    this.socket.emit('session', session, id, answer);
-    console.log('SESSION FIRED', answer ? 'ANSWER' : 'OFFER');
+  invitePeer(id: string) {
+    this.socket.emit('peer', id);
+    console.log('PEER KEY FIRED TO', id);
   }
 
-  sendCandidate(candidate: RTCIceCandidate, id: string) {
-    this.socket.emit('candidate', candidate, id);
-    console.log('CANDIDATE FIRED');
+  respondPeer(id: string) {
+    this.socket.emit('peer', id, true);
+    console.log('PEER KEY FIRED TO', id);
   }
 }
