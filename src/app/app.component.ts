@@ -38,9 +38,9 @@ export class AppComponent {
             id,
             new RTCPeerConnection({
               iceServers: [
-                {
-                  urls: ['stun:us-turn7.xirsys.com'],
-                },
+                // {
+                //   urls: ['stun:us-turn7.xirsys.com'],
+                // },
                 {
                   username:
                     'v9iKFB3Cwgc2OvSEti7j067vOl0bYk4OU4XxBCYVgo_PhZiJjZMRTHi0f8LG4dLrAAAAAGQRQiRMb2dpYTVlbnBhaQ==',
@@ -108,9 +108,9 @@ export class AppComponent {
           id,
           new RTCPeerConnection({
             iceServers: [
-              {
-                urls: ['stun:us-turn7.xirsys.com'],
-              },
+              // {
+              //   urls: ['stun:us-turn7.xirsys.com'],
+              // },
               {
                 username:
                   'v9iKFB3Cwgc2OvSEti7j067vOl0bYk4OU4XxBCYVgo_PhZiJjZMRTHi0f8LG4dLrAAAAAGQRQiRMb2dpYTVlbnBhaQ==',
