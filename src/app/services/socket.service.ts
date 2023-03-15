@@ -25,7 +25,7 @@ export class SocketService {
   // Listener callback register
   // on(event: string, c: (object: any) => void, key: string): void {
   //   if (this.listeners.has(event)) this.listeners.get(event)?.set(key, c);
-  //   else console.error(`"${event}" is not a registered listener event!`);
+  //   else console.error(`'${event}' is not a registered listener event!`);
   // }
 
   // Listener callback remover
@@ -49,7 +49,7 @@ export class SocketService {
   }
 
   requestConnection(id: string) {
-    this.socket.emit('connect', id);
+    this.socket.emit('channel', id);
     console.log('CONNECTION REQUEST FIRED TO', id);
   }
 }

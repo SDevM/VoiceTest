@@ -64,7 +64,7 @@ export class AppComponent {
     });
 
     // Upon recieving a connect request
-    sService.socket.on('connect', (peer: string) => {
+    sService.socket.on('channel', (peer: string) => {
       this.peerConnections.set(peer, this.me.connect(peer));
     });
 
