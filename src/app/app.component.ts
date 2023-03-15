@@ -38,21 +38,8 @@ export class AppComponent {
             id,
             new RTCPeerConnection({
               iceServers: [
-                // {
-                //   urls: ['stun:us-turn7.xirsys.com'],
-                // },
                 {
-                  username:
-                    'v9iKFB3Cwgc2OvSEti7j067vOl0bYk4OU4XxBCYVgo_PhZiJjZMRTHi0f8LG4dLrAAAAAGQRQiRMb2dpYTVlbnBhaQ==',
-                  credential: '7ecaa2c2-c2e5-11ed-b52a-0242ac140004',
-                  urls: [
-                    'turn:us-turn7.xirsys.com:80?transport=udp',
-                    'turn:us-turn7.xirsys.com:3478?transport=udp',
-                    // 'turn:us-turn7.xirsys.com:80?transport=tcp',
-                    // 'turn:us-turn7.xirsys.com:3478?transport=tcp',
-                    // 'turns:us-turn7.xirsys.com:443?transport=tcp',
-                    // 'turns:us-turn7.xirsys.com:5349?transport=tcp',
-                  ],
+                  urls: 'stun:stun.12voip.com:3478',
                 },
               ],
             })
@@ -108,21 +95,8 @@ export class AppComponent {
           id,
           new RTCPeerConnection({
             iceServers: [
-              // {
-              //   urls: ['stun:us-turn7.xirsys.com'],
-              // },
               {
-                username:
-                  'v9iKFB3Cwgc2OvSEti7j067vOl0bYk4OU4XxBCYVgo_PhZiJjZMRTHi0f8LG4dLrAAAAAGQRQiRMb2dpYTVlbnBhaQ==',
-                credential: '7ecaa2c2-c2e5-11ed-b52a-0242ac140004',
-                urls: [
-                  'turn:us-turn7.xirsys.com:80?transport=udp',
-                  'turn:us-turn7.xirsys.com:3478?transport=udp',
-                  // 'turn:us-turn7.xirsys.com:80?transport=tcp',
-                  // 'turn:us-turn7.xirsys.com:3478?transport=tcp',
-                  // 'turns:us-turn7.xirsys.com:443?transport=tcp',
-                  // 'turns:us-turn7.xirsys.com:5349?transport=tcp',
-                ],
+                urls: 'stun:stun.12voip.com:3478',
               },
             ],
           })
