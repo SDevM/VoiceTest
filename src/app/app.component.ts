@@ -44,8 +44,7 @@ export class AppComponent {
           });
           pc.ontrack = (event) => {
             console.log('ONTRACK FIRED', id);
-            if (!this.stream!.getAudioTracks().includes(event.track))
-              this.remoteStream.addTrack(event.track);
+            this.remoteStream.addTrack(event.track);
           };
 
           pc.setRemoteDescription(session).catch((err) =>
@@ -139,7 +138,7 @@ export class AppComponent {
           .start()
           .then((Stream) => {
             this.stream = Stream;
-            mediaPlayer(this.stream);
+            mediaPlayer(this.remoteStream);
           })
           .catch((err: Error) => {
             console.log('STREAMING FAILED', err.message);
