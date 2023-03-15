@@ -39,7 +39,7 @@ export class AppComponent {
             new RTCPeerConnection({
               iceServers: [
                 {
-                  urls: 'stun:stun.12voip.com:3478',
+                  urls: ['stun:us-turn7.xirsys.com'],
                 },
               ],
             })
@@ -61,7 +61,7 @@ export class AppComponent {
             console.error(err.message)
           );
           pc.createAnswer().then((answer) => {
-            // pc!.setLocalDescription(answer);
+            pc!.setLocalDescription(answer);
             sService.sendSession(answer, id, true);
           });
         }
@@ -96,7 +96,7 @@ export class AppComponent {
           new RTCPeerConnection({
             iceServers: [
               {
-                urls: 'stun:stun.12voip.com:3478',
+                urls: ['stun:us-turn7.xirsys.com'],
               },
             ],
           })
