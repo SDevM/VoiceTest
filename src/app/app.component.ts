@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import Peer, { DataConnection } from 'peerjs';
+import Peer, { MediaConnection } from 'peerjs';
 import { blobPlayer, mediaPlayer } from './helpers/audioPlayer.helper';
 import { AudioRecorder } from './helpers/audioRecorder.helper';
 import { AudioStreamer } from './helpers/audioStreamer.helper';
@@ -15,13 +15,15 @@ export class AppComponent {
   voiceActive = false;
   audioStreamer = new AudioStreamer();
   audioRecorder = new AudioRecorder(250);
-  stream: MediaStream | void = undefined;
+  stream?: MediaStream;
+  rec?: MediaRecorder;
   paused = false;
   started = false;
   me: Peer = new Peer({
-    debug: 3,
+    debug: 1,
   });
-  peerConnections: Map<string, DataConnection> = new Map();
+  peers = new Set<string>();
+  mediaConnections: Map<string, MediaConnection> = new Map();
   GlobalAudio = new Audio();
 
   constructor(sService: SocketService) {
@@ -32,6 +34,17 @@ export class AppComponent {
       sService.setId(this.me?.id);
     });
 
+    // Respond to call
+    this.me.on('call', (incoming) => {
+      console.log('Call recieved', incoming.peer);
+
+      incoming.answer(this.stream);
+      incoming.on('stream', (stream) => {
+        // Do something with this audio stream
+        mediaPlayer(stream);
+      });
+    });
+
     // Upon joing the socket, get a key
     sService.socket.on('new', (key: string, peers: string[]) => {
       console.log('Peerjs Accepted.', key);
@@ -39,6 +52,7 @@ export class AppComponent {
 
       peers.forEach((peer, i) => {
         console.log('Peer #' + i, peer);
+        this.peers.add(peer);
         sService.invitePeer(peer);
       });
     });
@@ -49,29 +63,46 @@ export class AppComponent {
         response ? 'Peer response recieved.' : 'Peer invite recieved'
       );
 
-      if (this.peerConnections.has(peer)) return;
-      this.peerConnections.set(peer, this.me?.connect(peer)!);
-      const pc = this.peerConnections.get(peer);
-      pc?.on('open', () => {
-        console.log('Connection open', pc.peer);
-
-        pc.send(this.stream);
-      });
-      pc?.on('data', (data) => {
-        console.log('Data recieved from', pc.peer);
-
-        const dataStream: MediaStream = data as MediaStream;
-        mediaPlayer(dataStream);
-      });
+      if (this.mediaConnections.has(peer)) return;
       if (!response) {
         sService.respondPeer(peer);
         console.log('Peer invitation responded to', peer);
+      } else {
+        this.peers.add(peer);
       }
+      // this.mediaConnections.set(peer, this.me?.connect(peer)!);
+      if (!this.stream) return;
+      this.mediaConnections.set(peer, this.me.call(peer, this.stream));
+      const mc = this.mediaConnections.get(peer);
+      mc?.on('stream', (stream) => {
+        // Do something with this audio stream
+        mediaPlayer(stream);
+      });
+
+      // pc?.on('open', () => {
+      //   console.log('Connection open', pc.peer);
+
+      //   if (!this.stream) return;
+      //   const rec = new MediaRecorder(this.stream!);
+      //   rec.ondataavailable = (data) => {
+      //     pc.send(data.data);
+      //   };
+      // });
+      // pc?.on('data', function (data) {
+      //   console.log('Data recieved from', pc.peer);
+
+      //   const audioBlob = new Blob([data as Blob], {
+      //     type: 'audio/webm;codecs=opus',
+      //   });
+      //   blobPlayer(audioBlob);
+      // });
+      console.log('New Call Started', mc);
     });
 
     // Remove user from peer connections
     sService.socket.on('delID', (peer: string) => {
-      this.peerConnections.delete(peer);
+      this.mediaConnections.delete(peer);
+      this.peers.delete(peer);
       console.log('Connection deleted for', peer);
     });
   }
@@ -79,19 +110,25 @@ export class AppComponent {
   async voice() {
     if (!this.voiceActive) {
       this.voiceActive = true;
-      if (this.audioStreamer.isStarted) this.audioStreamer.resume();
-      else
+      if (this.audioStreamer.isStarted) {
+        this.audioStreamer.resume();
+        this.rec?.resume();
+      } else
         this.audioStreamer
           .start()
-          .then((Stream) => {
-            this.stream = Stream;
-            this.peerConnections.forEach((pc) => pc.send(this.stream));
+          .then((stream) => {
+            this.stream = stream;
+            this.mediaConnections.forEach((mc) => {
+              mc.answer(this.stream);
+            });
+            this.peers.forEach((peer) => this.me.call(peer, this.stream!));
           })
           .catch((err: Error) => {
             console.error('Streaming failed.', err.message);
           });
     } else {
       this.voiceActive = false;
+      this.rec?.pause();
       await this.audioStreamer.pause();
     }
     console.log('Voice active.', this.voiceActive);
@@ -108,9 +145,6 @@ export class AppComponent {
     else if (this.started) {
       let audio = this.audioRecorder.stop();
       if (audio) blobPlayer(audio);
-      this.peerConnections.forEach((keyVal) => {
-        keyVal.send(audio);
-      });
       this.paused = false;
     }
     this.started = !this.started;
