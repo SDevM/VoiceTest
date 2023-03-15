@@ -18,7 +18,7 @@ export class AppComponent {
   stream: MediaStream | void = undefined;
   paused = false;
   started = false;
-  me?: Peer = new Peer({
+  me: Peer = new Peer({
     debug: 3,
   });
   key?: string;
