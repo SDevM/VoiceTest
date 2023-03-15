@@ -18,7 +18,9 @@ export class AppComponent {
   stream: MediaStream | void = undefined;
   paused = false;
   started = false;
-  me?: Peer;
+  me?: Peer = new Peer({
+    debug: 3,
+  });
   key?: string;
   peerConnections: Map<string, DataConnection> = new Map();
   GlobalAudio = new Audio();
@@ -27,11 +29,6 @@ export class AppComponent {
     // Upon joing the socket, get a key
     sService.socket.on('new', (key: string, peers: string[]) => {
       console.log('Peerjs Initialized.');
-
-      this.me = new Peer({
-        key: key,
-        debug: 3,
-      });
       peers?.forEach((peer, i) => {
         console.log('Peer #' + i, peer);
         sService.invitePeer(peer);

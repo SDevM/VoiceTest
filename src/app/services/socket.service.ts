@@ -33,6 +33,11 @@ export class SocketService {
   //   if (this.listeners.has(event)) this.listeners.get(event)?.delete(key);
   // }
 
+  setId(id: string) {
+    this.socket.emit('set', id);
+    console.log('PEER KEY SET');
+  }
+
   invitePeer(id: string) {
     this.socket.emit('peer', id);
     console.log('PEER KEY FIRED TO', id);
