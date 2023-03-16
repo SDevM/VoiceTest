@@ -43,11 +43,11 @@ export class AppComponent {
       incoming.on('close', () => {
         this.mediaConnections.delete(incoming.peer);
       });
-      incoming.answer(this.stream);
       incoming.on('stream', (stream) => {
         // Do something with this audio stream
         mediaPlayer(stream);
       });
+      incoming.answer(this.stream);
     });
 
     // Upon joing the socket, get a key
