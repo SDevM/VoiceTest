@@ -47,9 +47,14 @@ export class AppComponent {
         // Do something with this audio stream
         mediaPlayer(stream);
       });
-      console.log('Answering with', this.stream);
 
-      incoming.answer(this.stream);
+      this.waitFor<MediaStream | undefined>(
+        () => this.stream,
+        () => {
+          console.log('Answering with', this.stream);
+          incoming.answer(this.stream);
+        }
+      );
     });
 
     // Upon joing the socket, get a key
@@ -146,5 +151,14 @@ export class AppComponent {
       this.paused = false;
     }
     this.started = !this.started;
+  }
+
+  waitFor<T>(g: () => T, c: () => void) {
+    const hook = setInterval(() => {
+      if (g()) {
+        c();
+        clearInterval(hook);
+      }
+    }, 500);
   }
 }
