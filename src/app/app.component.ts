@@ -82,43 +82,9 @@ export class AppComponent {
     });
 
     // When recieving an offer, set it as a remote description
-    sService.socket.on('peer', (peer: string, response: boolean) => {
-      console.log(
-        response ? 'Peer response recieved.' : 'Peer invite recieved'
-      );
-
-      if (!response) {
-        sService.respondPeer(peer);
-        this.peers.add(peer);
-        console.log('channel', peer);
-      } else {
-        console.log('Peer invitation responded to', peer);
-      }
-      if (!this.stream) return;
-      this.mediaConnections.set(peer, this.me.call(peer, this.stream));
-      const mc = this.mediaConnections.get(peer);
-      mc?.on('stream', (stream) => {
-        // Do something with this audio stream
-        mediaPlayer(stream);
-      });
-
-      // pc?.on('open', () => {
-      //   console.log('Connection open', pc.peer);
-
-      //   if (!this.stream) return;
-      //   const rec = new MediaRecorder(this.stream!);
-      //   rec.ondataavailable = (data) => {
-      //     pc.send(data.data);
-      //   };
-      // });
-      // this.peerConnections.get(peer)?.on('data', function (data) {
-      //   console.log('Data recieved from', peer);
-
-      //   const audioBlob = new Blob([data as Blob], {
-      //     type: 'audio/webm;codecs=opus',
-      //   });
-      //   blobPlayer(audioBlob);
-      // });
+    sService.socket.on('peer', (peer: string) => {
+      this.peers.add(peer);
+      console.log('New peer accepted', peer);
     });
 
     // Remove user from peer connections
@@ -145,14 +111,6 @@ export class AppComponent {
             console.log('CULPRITS');
             console.log('MediaConnections', this.mediaConnections);
             console.log('Peers', this.peers);
-
-            const wanted: string[] = [];
-            this.mediaConnections.forEach((mc, key) => {
-              console.log('Destroy old call from', mc.peer);
-              mc.close();
-              wanted.push(key);
-            });
-            wanted.forEach((key) => this.mediaConnections.delete(key));
             this.peers.forEach((peer) => {
               this.mediaConnections.set(peer, this.me.call(peer, this.stream!));
               console.log('Call established to', peer);

@@ -39,12 +39,7 @@ export class SocketService {
   }
 
   invitePeer(id: string) {
-    this.socket.emit('peer', id, false);
-    console.log('PEER KEY FIRED TO', id);
-  }
-
-  respondPeer(id: string) {
-    this.socket.emit('peer', id, true);
+    this.socket.emit('peer', id);
     console.log('PEER KEY FIRED TO', id);
   }
 
