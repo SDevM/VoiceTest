@@ -47,6 +47,8 @@ export class AppComponent {
         // Do something with this audio stream
         mediaPlayer(stream);
       });
+      console.log('Answering with', this.stream);
+
       incoming.answer(this.stream);
     });
 
