@@ -118,6 +118,9 @@ export class AppComponent {
             console.log('Peers', this.peers);
             this.peers.forEach((peer) => {
               this.mediaConnections.set(peer, this.me.call(peer, this.stream!));
+              this.mediaConnections.get(peer)?.on('stream', (stream) => {
+                mediaPlayer(stream);
+              });
               console.log('Call established to', peer);
             });
           })
